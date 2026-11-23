@@ -5,7 +5,7 @@ const config = require('../config');
 module.exports = {
     commands: ['play', 'musica', 'ytmp3', 'ytmp4', 'video', 'tiktok', 'tt', 'imagen', 'img'],
     exec: async ({ sock, m, from, text, command }) => {
-        if (!text) return sock.sendMessage(from, { text: `⚠️ Escribe qué quieres buscar. Ejemplo: *.${command} Peso Pluma*` }, { quoted: m });
+        if (!text) return sock.sendMessage(from, { text: `⚠️ Escribe qué quieres buscar. Ejemplo: *.${command} 【entity-Peso Pluma¦canonical_name=Peso Pluma】*` }, { quoted: m });
         await sock.sendMessage(from, { text: config.mess.wait }, { quoted: m });
 
         try {
@@ -21,13 +21,15 @@ module.exports = {
 
                 let audioUrl = null;
                 try {
-                    const r1 = await axios.get(`https://vreden.my.id{encodeURIComponent(video.url)}`);
-                    audioUrl = r1.data?.result?.download?.url;
+                    const r1 = await axios.get(`https://api.davidcyriltech.my.id/download/ytmp3?url=${encodeURIComponent(video.url)}`, { timeout: 30000 });
+                    audioUrl = r1.data?.result?.downloadUrl || r1.data?.result?.download?.url;
                 } catch {}
 
                 if (!audioUrl) {
-                    const r2 = await axios.get(`https://agatz.xyz{encodeURIComponent(video.url)}`);
-                    audioUrl = r2.data?.data?.downloadUrl;
+                    try {
+                        const r2 = await axios.get(`https://vreden.my.id/api/ytmp3?url=${encodeURIComponent(video.url)}`, { timeout: 30000 });
+                        audioUrl = r2.data?.result?.download?.url || r2.data?.result?.url;
+                    } catch {}
                 }
 
                 if (!audioUrl) return sock.sendMessage(from, { text: '❌ El servidor de audio está saturado, intenta de nuevo en unos segundos.' }, { quoted: m });
@@ -42,13 +44,15 @@ module.exports = {
 
                 let vidUrl = null;
                 try {
-                    const r1 = await axios.get(`https://vreden.my.id{encodeURIComponent(video.url)}`);
-                    vidUrl = r1.data?.result?.download?.url;
+                    const r1 = await axios.get(`https://api.davidcyriltech.my.id/download/ytmp4?url=${encodeURIComponent(video.url)}`, { timeout: 40000 });
+                    vidUrl = r1.data?.result?.downloadUrl || r1.data?.result?.download?.url;
                 } catch {}
 
                 if (!vidUrl) {
-                    const r2 = await axios.get(`https://agatz.xyz{encodeURIComponent(video.url)}`);
-                    vidUrl = r2.data?.data?.downloadUrl;
+                    try {
+                        const r2 = await axios.get(`https://vreden.my.id/api/ytmp4?url=${encodeURIComponent(video.url)}`, { timeout: 40000 });
+                        vidUrl = r2.data?.result?.download?.url || r2.data?.result?.url;
+                    } catch {}
                 }
 
                 if (!vidUrl) return sock.sendMessage(from, { text: '❌ No se pudo descargar el video.' }, { quoted: m });
@@ -57,21 +61,32 @@ module.exports = {
             }
 
             else if (['tiktok', 'tt'].includes(command)) {
-                const res = await axios.get(`https://tikwm.com{encodeURIComponent(text)}`);
-                const videoUrl = res.data?.data?.play;
+                let videoUrl = null;
+                try {
+                    const res = await axios.get(`https://api.davidcyriltech.my.id/download/tiktok?url=${encodeURIComponent(text)}`, { timeout: 30000 });
+                    videoUrl = res.data?.result?.video || res.data?.result?.downloadUrl;
+                } catch {}
+                if (!videoUrl) {
+                    try {
+                        const res2 = await axios.get(`https://tikwm.com/api/?url=${encodeURIComponent(text)}`, { timeout: 30000 });
+                        videoUrl = res2.data?.data?.play;
+                    } catch {}
+                }
                 if (!videoUrl) return sock.sendMessage(from, { text: '❌ Enlace inválido o privado.' }, { quoted: m });
 
                 await sock.sendMessage(from, { video: { url: videoUrl }, caption: `📱 *TikTok - KRONOS-MD*` }, { quoted: m });
             }
 
             else if (['imagen', 'img'].includes(command)) {
-                const bing = await axios.get(`https://bing.com{encodeURIComponent(text)}`, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-                const matches = [...bing.data.matchAll(/murl&quot;:&quot;(https?:\/\/[^&]+)&quot;/g)];
-                if (!matches.length) return sock.sendMessage(from, { text: '❌ No encontré imágenes.' }, { quoted: m });
-
-                const randomMatch = matches[Math.floor(Math.random() * Math.min(matches.length, 10))];
-                const randomImg = randomMatch.pop();
-                await sock.sendMessage(from, { image: { url: randomImg }, caption: `🖼️ *${text}*` }, { quoted: m });
+                try {
+                    const res = await axios.get(`https://api.davidcyriltech.my.id/search/image?query=${encodeURIComponent(text)}`, { timeout: 20000 });
+                    const imgUrl = res.data?.result?.[0]?.image || res.data?.result?.[0];
+                    if (!imgUrl) throw new Error('no img');
+                    await sock.sendMessage(from, { image: { url: imgUrl }, caption: `🖼️ *${text}*` }, { quoted: m });
+                } catch {
+                    const fallback = `https://source.unsplash.com/800x600/?${encodeURIComponent(text)}`;
+                    await sock.sendMessage(from, { image: { url: fallback }, caption: `🖼️ *${text}*` }, { quoted: m });
+                }
             }
         } catch (e) {
             console.error(e);
