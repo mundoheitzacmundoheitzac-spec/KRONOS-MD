@@ -3,28 +3,33 @@ const antilinkMod = require('./plugins/plugins/antilink.js');
 
 module.exports = async (sock, m) => {
     try {
-        const from = m.key.remoteJid;
-        if (!from || from === 'status@broadcast') return;
+        const from = m.key?.remoteJid;
+        if (!from || from === 'status@broadcast' || !m.message) return;
         const isGroup = from.endsWith('@g.us');
 
         const rawSender = m.key.fromMe ? sock.user.id : (isGroup ? (m.key.participant || m.participant) : from);
         if (!rawSender) return;
         const senderNum = rawSender.split(':').shift().split('@').shift().replace(/\D/g, '');
 
-        const msg = m.message.ephemeralMessage?.message || m.message.viewOnceMessage?.message || m.message.viewOnceMessageV2?.message || m.message;
+        const msg = m.message.ephemeralMessage?.message || m.message.viewOnceMessage?.message || m.message.viewOnceMessageV2?.message || m.message || {};
         const body = msg.conversation ||
                      msg.extendedTextMessage?.text ||
                      msg.imageMessage?.caption ||
                      msg.videoMessage?.caption || '';
 
-        const isOwner = m.key.fromMe || config.ownerNumber.some(num => num.replace(/\D/g, '') === senderNum);
+        // Esto arregla si tu prefix es "." o ["."]
+        const prefixes = Array.isArray(config.prefix) ? config.prefix : [config.prefix];
+        const owners = Array.isArray(config.ownerNumber) ? config.ownerNumber : [config.ownerNumber];
+        const isOwner = m.key.fromMe || owners.some(num => String(num).replace(/\D/g, '') === senderNum);
 
         let isAdmin = false;
         let isBotAdmin = false;
         let groupMetadata = null;
 
         if (isGroup) {
-            groupMetadata = await sock.groupMetadata(from);
+            try {
+                groupMetadata = await sock.groupMetadata(from);
+            } catch { groupMetadata = { participants: [] }; }
             const participants = groupMetadata.participants || [];
             const botNum = sock.user.id.split(':').shift().split('@').shift().replace(/\D/g, '');
             const botLid = sock.user.lid ? sock.user.lid.split(':').shift().split('@').shift().replace(/\D/g, '') : '';
@@ -43,11 +48,12 @@ module.exports = async (sock, m) => {
             if (borrado) return;
         }
 
-        const usedPrefix = config.prefix.find(p => body.startsWith(p));
+        const usedPrefix = prefixes.find(p => p && body.startsWith(p));
         if (!usedPrefix) return;
 
         const args = body.slice(usedPrefix.length).trim().split(/ +/);
-        const command = args.shift().toLowerCase();
+        const command = args.shift()?.toLowerCase();
+        if (!command) return;
         const text = args.join(' ');
 
         for (const [, plugin] of global.plugins) {
