@@ -4,7 +4,7 @@ const {
     DisconnectReason,
     fetchLatestBaileysVersion,
     makeCacheableSignalKeyStore
-} = require('@whiskeysockets/baileys');
+} = require('@whiskeysockets/【entity-baileys¦canonical_name=Baileys】');
 const pino = require('pino');
 const readline = require('readline');
 const fs = require('fs');
@@ -17,16 +17,20 @@ const question = (text) => new Promise((resolve) => rl.question(text, resolve));
 
 global.plugins = new Map();
 function loadPlugins() {
-    const pluginDir = path.join(__dirname, 'plugins');
-    if (!fs.existsSync(pluginDir)) fs.mkdirSync(pluginDir);
-    const files = fs.readdirSync(pluginDir).filter(file => file.endsWith('.js'));
-    for (const file of files) {
-        try {
-            delete require.cache[require.resolve(path.join(pluginDir, file))];
-            const plugin = require(path.join(pluginDir, file));
-            global.plugins.set(file, plugin);
-        } catch (e) {
-            console.error(`Error cargando plugin ${file}:`, e);
+    global.plugins.clear();
+    const dirs = [path.join(__dirname, 'plugins'), path.join(__dirname, 'plugins', 'plugins')];
+    for (const pluginDir of dirs) {
+        if (!fs.existsSync(pluginDir)) continue;
+        const files = fs.readdirSync(pluginDir).filter(file => file.endsWith('.js'));
+        for (const file of files) {
+            try {
+                delete require.cache[require.resolve(path.join(pluginDir, file))];
+                const plugin = require(path.join(pluginDir, file));
+                if (!plugin.commands || !plugin.exec) continue;
+                global.plugins.set(pluginDir + '/' + file, plugin);
+            } catch (e) {
+                console.error(`Error cargando plugin ${file}:`, e);
+            }
         }
     }
     console.log(`✅ [KRONOS-MD] Se cargaron ${global.plugins.size} módulos de comandos.`);
@@ -93,7 +97,7 @@ async function startKronos() {
 
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const m = messages[0];
-        if (!m.message || m.key.fromMe) return;
+        if (!m.message) return;
         await handler(sock, m);
     });
 }
