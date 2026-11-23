@@ -17,8 +17,7 @@ module.exports = {
         'neon', 'fuego', 'galaxia', 'estilo', 'fancy', 'sorteo'
     ],
     exec: async ({ sock, m, from, sender, text, command, isGroup, isAdmin, isBotAdmin, isOwner, groupMetadata }) => {
-        const mentioned = m.message?.extendedTextMessage?.contextInfo?.mentionedJid?. ||
-                          m.message?.extendedTextMessage?.contextInfo?.participant;
+        const mentioned = m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0] || m.message?.extendedTextMessage?.contextInfo?.participant;
 
         // 1. LOGOS Y TEXTOS ESTILIZADOS (Para todos)
         if (['logo1', 'logo2', 'logo3', 'neon', 'fuego', 'galaxia'].includes(command)) {
