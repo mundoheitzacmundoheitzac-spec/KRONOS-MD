@@ -10,15 +10,15 @@ module.exports = {
         try {
             if (['ia', 'ai', 'chatgpt', 'gpt'].includes(command)) {
                 if (!text) return sock.sendMessage(from, { text: '🤖 Escribe tu pregunta. Ej: *.ia Explícame qué es un agujero negro*' }, { quoted: m });
-                const res = await axios.get(`https://pollinations.ai{encodeURIComponent(text)}`);
+                const res = await axios.get(`https://text.pollinations.ai/${encodeURIComponent(text)}`, { timeout: 30000 });
                 return sock.sendMessage(from, { text: `🧠 *KRONOS-MD IA:*\n\n${res.data}` }, { quoted: m });
             }
 
             if (command === 'traducir' || command === 'translate') {
-                const lang = args;
+                const lang = args[0];
                 const query = args.slice(1).join(' ');
                 if (!lang || !query) return sock.sendMessage(from, { text: '🌐 Uso: *.traducir en Hola mundo* (en=inglés, es=español, pt=portugués, fr=francés)' }, { quoted: m });
-                const res = await axios.get(`https://translated.net{encodeURIComponent(query)}&langpair=autodetect|${lang}`);
+                const res = await axios.get(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(query)}&langpair=autodetect|${lang}`, { timeout: 20000 });
                 const translated = res.data?.responseData?.translatedText || 'No se pudo traducir.';
                 return sock.sendMessage(from, { text: `🌐 *Traducción (${lang}):*\n${translated}` }, { quoted: m });
             }
@@ -26,25 +26,26 @@ module.exports = {
             if (command === 'calc' || command === 'calculadora') {
                 if (!text) return sock.sendMessage(from, { text: '🧮 Ejemplo: *.calc 25 * 4 + 10*' }, { quoted: m });
                 const clean = text.replace(/[^0-9+\-*/().]/g, '');
+                if (!clean) return sock.sendMessage(from, { text: '🧮 Escribe solo números y signos.' }, { quoted: m });
                 const result = Function(`"use strict"; return (${clean})`)();
                 return sock.sendMessage(from, { text: `🧮 *Resultado:* ${result}` }, { quoted: m });
             }
 
             if (command === 'qr' || command === 'codigoqr') {
                 if (!text) return sock.sendMessage(from, { text: '📱 Escribe el texto o enlace para el QR. Ej: *.qr https://google.com*' }, { quoted: m });
-                const qrUrl = `https://qrserver.com{encodeURIComponent(text)}`;
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(text)}`;
                 return sock.sendMessage(from, { image: { url: qrUrl }, caption: `✅ *Código QR generado por KRONOS-MD*` }, { quoted: m });
             }
 
             if (command === 'acortar' || command === 'tinyurl') {
                 if (!text) return sock.sendMessage(from, { text: '🔗 Pega el enlace largo. Ej: *.acortar https://...*' }, { quoted: m });
-                const res = await axios.get(`https://tinyurl.com{encodeURIComponent(text)}`);
+                const res = await axios.get(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(text)}`, { timeout: 20000 });
                 return sock.sendMessage(from, { text: `🔗 *Enlace acortado:*\n${res.data}` }, { quoted: m });
             }
 
             if (command === 'clima' || command === 'weather') {
                 if (!text) return sock.sendMessage(from, { text: '🌤️ Escribe una ciudad. Ej: *.clima Chihuahua*' }, { quoted: m });
-                const res = await axios.get(`https://wttr.in{encodeURIComponent(text)}?format=3`);
+                const res = await axios.get(`https://wttr.in/${encodeURIComponent(text)}?format=3`, { timeout: 20000 });
                 return sock.sendMessage(from, { text: `🌍 *Clima actual:* ${res.data}` }, { quoted: m });
             }
 
@@ -82,6 +83,7 @@ module.exports = {
                 return sock.sendMessage(from, { text: text.toUpperCase() }, { quoted: m });
             }
         } catch (e) {
+            console.error(e);
             return sock.sendMessage(from, { text: '⚠️ Error al ejecutar la herramienta. Intenta de nuevo.' }, { quoted: m });
         }
     }
