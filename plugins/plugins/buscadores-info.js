@@ -55,7 +55,7 @@ module.exports = {
             }
             if (command === 'dato' || command === 'curiosidad') {
                 try {
-                    const res = await 【entity-axios¦canonical_name=axios】.get('https://uselessfacts.jsph.pl/api/v2/facts/random?language=es', { timeout: 10000 });
+                    const res = await axios.get('https://uselessfacts.jsph.pl/api/v2/facts/random?language=es', { timeout: 10000 });
                     return sock.sendMessage(from, { text: `🤯 *Dato curioso:*\n\n${res.data.text}` }, { quoted: m });
                 } catch {
                     return sock.sendMessage(from, { text: '🤯 *Dato curioso:*\n\nLos pulpos tienen 3 corazones.' }, { quoted: m });
