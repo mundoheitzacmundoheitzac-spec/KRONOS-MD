@@ -21,6 +21,8 @@ function saveConfig(data) {
 
 module.exports = {
     commands: ['antilink', 'antilinkon', 'antilinkoff'],
+    group: true,
+    admin: true,
     exec: async ({ sock, m, from, text, command, isGroup, isAdmin, isOwner }) => {
         try {
             if (!isGroup) {
@@ -64,20 +66,28 @@ module.exports = {
         }
     },
 
-    checkAntilink: async ({ sock, m, from, sender, isGroup, isAdmin, isOwner }) => {
+    checkAntilink: async ({ sock, m, from, sender, isGroup, isAdmin, isOwner, isBotAdmin }) => {
         try {
             if (!isGroup || isAdmin || isOwner) return false;
+            if (!isBotAdmin) return false;
             const cfg = loadConfig();
             if (!cfg[from]) return false;
 
-            const body = m.message?.conversation || m.message?.extendedTextMessage?.text || m.message?.imageMessage?.caption || m.message?.videoMessage?.caption || '';
+            const msg = m.message?.ephemeralMessage?.message || m.message?.viewOnceMessage?.message || m.message?.viewOnceMessageV2?.message || m.message || {};
+            const body = msg.conversation || msg.extendedTextMessage?.text || msg.imageMessage?.caption || msg.videoMessage?.caption || '';
             if (!body) return false;
 
-            const tieneLink = /https?:\/\/|www\.|chat\.whatsapp\.com|wa\.me|t\.me|youtube\.com|youtu\.be|tiktok\.com|instagram\.com|discord\.gg/i.test(body);
+            const tieneLink = /https?:\/\/|www\.|chat\.whatsapp\.com|wa\.me|t\.me|youtube\.com|youtu\.be|tiktok\.com|instagram\.com|discord\.gg|facebook\.com/i.test(body);
             if (!tieneLink) return false;
 
-            await sock.sendMessage(from, { delete: m.key });
-            await sock.sendMessage(from, { text: `🚫 @${sender.split('@')[0]} Links no permitidos.`, mentions: [sender] });
+            // Sender real para mencionar bien, aunque venga como LID
+            const mentionJid = m.key.participant || m.participant || sender;
+            const num = String(mentionJid).split(':').shift().split('@').shift().replace(/\D/g, '');
+
+            try {
+                await sock.sendMessage(from, { delete: m.key });
+            } catch {}
+            await sock.sendMessage(from, { text: `🚫 @${num} Links no permitidos.`, mentions: [mentionJid] });
             return true;
         } catch {
             return false;
