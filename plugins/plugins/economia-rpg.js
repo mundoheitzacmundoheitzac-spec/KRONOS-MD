@@ -23,7 +23,7 @@ module.exports = {
         const db = loadDB();
         const user = getUser(db, sender);
         const now = Date.now();
-        const mentioned = m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.;
+        const mentioned = m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0] || m.message?.extendedTextMessage?.contextInfo?.participant;
 
         if (command === 'work' || command === 'trabajar') {
             const earn = Math.floor(Math.random() * 400) + 150;
