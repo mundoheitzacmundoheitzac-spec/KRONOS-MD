@@ -28,6 +28,7 @@ module.exports = {
 ├ .grupo abrir / cerrar
 ├ .hidetag <texto>
 ├ .tagall
+├ .antilink on / off
 └ .linkgrupo
 
 🎮 *ECONOMÍA Y JUEGOS*
