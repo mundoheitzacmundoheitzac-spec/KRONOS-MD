@@ -7,13 +7,13 @@ module.exports = {
         'smile', 'sonreir', 'wave', 'saludar', 'dance', 'bailar', 'anime', 'buscaranime'
     ],
     exec: async ({ sock, m, from, sender, text, command }) => {
-        const mentioned = m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.;
+        const mentioned = m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
 
         try {
             if (command === 'anime' || command === 'buscaranime') {
                 if (!text) return sock.sendMessage(from, { text: '🎌 Escribe el nombre del anime. Ej: *.anime Naruto*' }, { quoted: m });
-                const res = await axios.get(`https://jikan.moe{encodeURIComponent(text)}&limit=1`);
-                const data = res.data?.data?.;
+                const res = await axios.get(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(text)}&limit=1`, { timeout: 20000 });
+                const data = res.data?.data?.[0];
                 if (!data) return sock.sendMessage(from, { text: '❌ No encontré ese anime.' }, { quoted: m });
 
                 const info = `
@@ -34,12 +34,12 @@ module.exports = {
             };
             const endpoint = mapCmd[command] || command;
 
-            const res = await axios.get(`https://waifu.pics{endpoint}`);
+            const res = await axios.get(`https://api.waifu.pics/sfw/${endpoint}`, { timeout: 20000 });
             const imgUrl = res.data?.url;
             if (!imgUrl) return sock.sendMessage(from, { text: '❌ No se pudo cargar la imagen.' }, { quoted: m });
 
             const caption = mentioned
-                ? `✨ @${sender.split('@')} usó *${command}* con @${mentioned.split('@')}`
+                ? `✨ @${sender.split('@')[0]} usó *${command}* con @${mentioned.split('@')[0]}`
                 : `🌸 *${command.toUpperCase()}* — KRONOS-MD`;
 
             await sock.sendMessage(from, {
@@ -49,6 +49,7 @@ module.exports = {
             }, { quoted: m });
 
         } catch (e) {
+            console.error(e);
             return sock.sendMessage(from, { text: '⚠️ Error al conectar con el servidor de anime.' }, { quoted: m });
         }
     }
