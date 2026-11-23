@@ -21,7 +21,7 @@ module.exports = {
                     return sock.sendMessage(from, { text: '❌ No encontré información en Wikipedia.' }, { quoted: m });
                 }
             }
-            if (command === 'letra' || command === 'lyrics') {
+            if (command === 'lyrics' || command === 'letra') {
                 if (!text) return sock.sendMessage(from, { text: '🎤 Escribe el artista y canción. Ej: *.letra Peso Pluma Ella Baila Sola*' }, { quoted: m });
                 try {
                     const res = await 【entity-axios¦canonical_name=axios】.get(`https://lrclib.net/api/search?track_name=${encodeURIComponent(text)}`, { timeout: 15000 });
