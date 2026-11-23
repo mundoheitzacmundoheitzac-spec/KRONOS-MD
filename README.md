@@ -1,48 +1,50 @@
-# ⚡ KRONOS-MD ⚡
+### ⚡ Instalación de KRONOS-MD ⚡
 
-Bot de WhatsApp con más de 180 comandos reales, conexión por Código QR o Código de 8 dígitos (Pairing Code).
-👑 Owner: +52 639 136 6054
+### 1. Actualizar Termux:
 
-## 📲 Instalación en Termux (Paso a Paso)
+```bash
+pkg update && pkg upgrade -y
+```
 
-### 1. Actualizar los paquetes de Termux:
+### 2. Instalar lo que necesita el bot:
 
-    pkg update && pkg upgrade -y
+```bash
+pkg install nodejs git ffmpeg -y
+```
 
-### 2. Instalar Node.js, Git y FFmpeg:
+### 3. Bajar el bot de GitHub:
 
-    pkg install nodejs git ffmpeg -y
-
-### 3. Descargar (clonar) el repositorio del bot:
-
-    git clone https://github.com/mundoheitzacmundoheitzac-spec/KRONOS-MD.git
+```bash
+git clone https://github.com/mundoheitzacmundoheitzac-spec/KRONOS-MD.git
+```
 
 ### 4. Entrar a la carpeta del bot:
 
-    cd KRONOS-MD
+```bash
+cd KRONOS-MD
+```
 
-### 5. Acomodar la imagen del menú en su carpeta:
+### 5. Mover el menu.jpg a su carpeta, solo si existe:
 
-    mkdir -p media && mv menu.jpg media/menu.jpg
+```bash
+mkdir -p media
+[ -f menu.jpg ] && mv menu.jpg media/menu.jpg
+```
 
-### 6. Acomodar los archivos de comandos (plugins):
+### 6. Acomodar los plugins, solo si están dobles:
 
-    mv plugins/plugins/* plugins/ && rmdir plugins/plugins
+```bash
+[ -d plugins/plugins ] && mv plugins/plugins/* plugins/ && rmdir plugins/plugins
+```
 
-### 7. Instalar las librerías necesarias del bot:
+### 7. Instalar las librerías del bot:
 
-    npm install
+```bash
+npm install
+```
 
-### 8. Encender el bot (elegir QR o Código de 8 dígitos):
+### 8. Prender el bot:
 
-    npm start
-
-## 🛠️ Solución si el bot conecta pero no responde
-
-### 1. Detener el bot en Termux:
-Presiona las teclas **CTRL + C** en tu teclado de Termux.
-
-### 2. Ejecutar el comando de reparación automática y reiniciar:
-
-    sed -i 's/messages;/messages[0];/g' index.js && sed -i 's/if (!m.message || m.key.fromMe) return;/if (!m || !m.message) return;/g' index.js && sed -i "s/split('@');/split('@')[0];/g" handler.js && sed -i "s/split(':');/split(':')[0];/g" handler.js && sed -i 's/mentionedJid?\.;/mentionedJid?.[0];/g' plugins/*.js && sed -i 's/mentionedJid?\. ||/mentionedJid?.[0] ||/g' plugins/*.js && sed -i 's/search\.videos;/search.videos[0];/g' plugins/descargas.js && sed -i 's/data?\.\?\.url/data?.[0]?.url/g' plugins/descargas.js && sed -i 's/randomImg },/randomImg[1] },/g' plugins/descargas.js && sed -i 's/data?\.data?\.;/data?.data?.[0];/g' plugins/anime-otaku.js && sed -i 's/msgType = Object.keys(quoted || m.message);/msgType = Object.keys(quoted || m.message)[0];/g' plugins/stickers-media.js && npm start
-
+```bash
+npm start
+```
