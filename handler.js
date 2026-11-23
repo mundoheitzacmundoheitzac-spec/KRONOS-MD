@@ -1,4 +1,5 @@
 const config = require('./config');
+const antilinkMod = require('./plugins/plugins/antilink.js');
 
 module.exports = async (sock, m) => {
     try {
@@ -15,13 +16,6 @@ module.exports = async (sock, m) => {
                      msg.extendedTextMessage?.text ||
                      msg.imageMessage?.caption ||
                      msg.videoMessage?.caption || '';
-
-        const usedPrefix = config.prefix.find(p => body.startsWith(p));
-        if (!usedPrefix) return;
-
-        const args = body.slice(usedPrefix.length).trim().split(/ +/);
-        const command = args.shift().toLowerCase();
-        const text = args.join(' ');
 
         const isOwner = m.key.fromMe || config.ownerNumber.some(num => num.replace(/\D/g, '') === senderNum);
 
@@ -43,7 +37,18 @@ module.exports = async (sock, m) => {
                 if ((pId === senderNum || pPhone === senderNum) && adminStatus) isAdmin = true;
                 if ((pId === botNum || pPhone === botNum || (botLid && pId === botLid)) && adminStatus) isBotAdmin = true;
             }
+
+            // ANTILINK
+            const borrado = await antilinkMod.checkAntilink({ sock, m, from, sender: rawSender, isGroup, isAdmin, isOwner, isBotAdmin });
+            if (borrado) return;
         }
+
+        const usedPrefix = config.prefix.find(p => body.startsWith(p));
+        if (!usedPrefix) return;
+
+        const args = body.slice(usedPrefix.length).trim().split(/ +/);
+        const command = args.shift().toLowerCase();
+        const text = args.join(' ');
 
         for (const [, plugin] of global.plugins) {
             if (plugin.commands && plugin.commands.includes(command)) {
@@ -52,7 +57,7 @@ module.exports = async (sock, m) => {
                 if (plugin.admin && !isAdmin && !isOwner) return sock.sendMessage(from, { text: config.mess.onlyAdmin }, { quoted: m });
                 if (plugin.botAdmin && !isBotAdmin) return sock.sendMessage(from, { text: config.mess.botAdmin }, { quoted: m });
 
-                await plugin.exec({ sock, m, from, sender: rawSender, args, text, command, isOwner, isAdmin, isBotAdmin, groupMetadata });
+                await plugin.exec({ sock, m, from, sender: rawSender, args, text, command, isOwner, isAdmin, isBotAdmin, isGroup, groupMetadata });
                 break;
             }
         }
