@@ -10,7 +10,7 @@ module.exports = {
     exec: async ({ sock, m, from, args, text, command, groupMetadata }) => {
         const participants = groupMetadata.participants;
         const ctx = m.message?.extendedTextMessage?.contextInfo;
-        const mentioned = (ctx?.mentionedJid && ctx.mentionedJid.length > 0) ? ctx.mentionedJid.shift() : ctx?.participant;
+        const mentioned = ctx?.mentionedJid?.[0] || ctx?.participant;
 
         switch (command) {
             case 'kick':
@@ -18,7 +18,7 @@ module.exports = {
             case 'echar': {
                 if (!mentioned) return sock.sendMessage(from, { text: '⚠️ Etiqueta o responde al mensaje del usuario que quieres eliminar.' }, { quoted: m });
                 await sock.groupParticipantsUpdate(from, [mentioned], 'remove');
-                await sock.sendMessage(from, { text: `✅ Usuario @${mentioned.split('@').shift()} eliminado del grupo.`, mentions: [mentioned] });
+                await sock.sendMessage(from, { text: `✅ Usuario @${mentioned.split('@')[0]} eliminado del grupo.`, mentions: [mentioned] });
                 break;
             }
 
@@ -26,7 +26,7 @@ module.exports = {
             case 'daradmin': {
                 if (!mentioned) return sock.sendMessage(from, { text: '⚠️ Etiqueta o responde a quien le darás admin.' }, { quoted: m });
                 await sock.groupParticipantsUpdate(from, [mentioned], 'promote');
-                await sock.sendMessage(from, { text: `👑 @${mentioned.split('@').shift()} ahora es administrador.`, mentions: [mentioned] });
+                await sock.sendMessage(from, { text: `👑 @${mentioned.split('@')[0]} ahora es administrador.`, mentions: [mentioned] });
                 break;
             }
 
@@ -34,7 +34,7 @@ module.exports = {
             case 'quitaradmin': {
                 if (!mentioned) return sock.sendMessage(from, { text: '⚠️ Etiqueta o responde al admin que vas a degradar.' }, { quoted: m });
                 await sock.groupParticipantsUpdate(from, [mentioned], 'demote');
-                await sock.sendMessage(from, { text: `📉 Se le quitó el admin a @${mentioned.split('@').shift()}.`, mentions: [mentioned] });
+                await sock.sendMessage(from, { text: `📉 Se le quitó el admin a @${mentioned.split('@')[0]}.`, mentions: [mentioned] });
                 break;
             }
 
@@ -65,7 +65,7 @@ module.exports = {
             case 'todos': {
                 let teks = `📢 *INVOCACIÓN GENERAL - KRONOS-MD*\n\n*Mensaje:* ${text || 'Sin mensaje'}\n\n`;
                 for (let mem of participants) {
-                    teks += `🔸 @${mem.id.split('@').shift()}\n`;
+                    teks += `🔸 @${mem.id.split('@')[0]}\n`;
                 }
                 await sock.sendMessage(from, { text: teks, mentions: participants.map(a => a.id) });
                 break;
@@ -74,7 +74,7 @@ module.exports = {
             case 'link':
             case 'linkgrupo': {
                 const code = await sock.groupInviteCode(from);
-                await sock.sendMessage(from, { text: `🔗 *Enlace del grupo:*\nhttps://whatsapp.com{code}` }, { quoted: m });
+                await sock.sendMessage(from, { text: `🔗 *Enlace del grupo:*\nhttps://chat.whatsapp.com/${code}` }, { quoted: m });
                 break;
             }
 
