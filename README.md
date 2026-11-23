@@ -24,17 +24,17 @@ git clone https://github.com/mundoheitzacmundoheitzac-spec/KRONOS-MD.git
 cd KRONOS-MD
 ```
 
-### 5. Mover el menu.jpg a su carpeta, solo si existe:
+### 5. Mover el menu.jpg a su carpeta:
 
 ```bash
 mkdir -p media
-[ -f menu.jpg ] && mv menu.jpg media/menu.jpg
+mv menu.jpg media/menu.jpg
 ```
 
-### 6. Acomodar los plugins, solo si están dobles:
+### 6. Acomodar los plugins:
 
 ```bash
-[ -d plugins/plugins ] && mv plugins/plugins/* plugins/ && rmdir plugins/plugins
+mv plugins/plugins/* plugins/
 ```
 
 ### 7. Instalar las librerías del bot:
