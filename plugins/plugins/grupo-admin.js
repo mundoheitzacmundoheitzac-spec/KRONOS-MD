@@ -2,7 +2,8 @@ module.exports = {
     commands: [
         'kick', 'ban', 'echar', 'promote', 'daradmin', 'demote', 'quitaradmin',
         'grupo', 'group', 'hidetag', 'totag', 'tagall', 'invocar', 'todos',
-        'link', 'linkgrupo', 'revoke', 'restablecer', 'setname', 'setdesc', 'infogrupo'
+        'link', 'linkgrupo', 'revoke', 'restablecer', 'setname', 'setdesc', 'infogrupo',
+        'antilink', 'antienlace'
     ],
     group: true,
     admin: true,
@@ -102,6 +103,22 @@ module.exports = {
             case 'infogrupo': {
                 const info = `📋 *INFO DEL GRUPO*\n• *Nombre:* ${groupMetadata.subject}\n• *Miembros:* ${participants.length}\n• *Descripción:* ${groupMetadata.desc || 'Sin descripción'}`;
                 await sock.sendMessage(from, { text: info }, { quoted: m });
+                break;
+            }
+
+            case 'antilink':
+            case 'antienlace': {
+                const sub = (args.shift() || '').toLowerCase();
+                if (!global.antilink) global.antilink = {};
+                if (sub === 'on' || sub === 'activar' || sub === 'encender') {
+                    global.antilink[from] = true;
+                    await sock.sendMessage(from, { text: '🔗 *Antilink ACTIVADO.* Solo los admins pueden mandar links.' }, { quoted: m });
+                } else if (sub === 'off' || sub === 'apagar' || sub === 'desactivar') {
+                    delete global.antilink[from];
+                    await sock.sendMessage(from, { text: '🔗 *Antilink DESACTIVADO.* Ya todos pueden mandar links.' }, { quoted: m });
+                } else {
+                    await sock.sendMessage(from, { text: '⚙️ Usa: *.antilink on* o *.antilink off*' }, { quoted: m });
+                }
                 break;
             }
         }
