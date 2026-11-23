@@ -3,14 +3,18 @@ const config = require('./config');
 module.exports = async (sock, m) => {
     try {
         const from = m.key.remoteJid;
+        if (!from || from === 'status@broadcast') return;
         const isGroup = from.endsWith('@g.us');
-        const sender = isGroup ? m.key.participant : m.key.remoteJid;
-        const senderNumber = sender.split('@');
 
-        const body = m.message.conversation ||
-                     m.message.extendedTextMessage?.text ||
-                     m.message.imageMessage?.caption ||
-                     m.message.videoMessage?.caption || '';
+        const rawSender = m.key.fromMe ? sock.user.id : (isGroup ? (m.key.participant || m.participant) : from);
+        if (!rawSender) return;
+        const senderNum = rawSender.split(':').shift().split('@').shift().replace(/\D/g, '');
+
+        const msg = m.message.ephemeralMessage?.message || m.message.viewOnceMessage?.message || m.message.viewOnceMessageV2?.message || m.message;
+        const body = msg.conversation ||
+                     msg.extendedTextMessage?.text ||
+                     msg.imageMessage?.caption ||
+                     msg.videoMessage?.caption || '';
 
         const usedPrefix = config.prefix.find(p => body.startsWith(p));
         if (!usedPrefix) return;
@@ -19,7 +23,7 @@ module.exports = async (sock, m) => {
         const command = args.shift().toLowerCase();
         const text = args.join(' ');
 
-        const isOwner = config.ownerNumber.includes(senderNumber);
+        const isOwner = m.key.fromMe || config.ownerNumber.some(num => num.replace(/\D/g, '') === senderNum);
 
         let isAdmin = false;
         let isBotAdmin = false;
@@ -27,28 +31,28 @@ module.exports = async (sock, m) => {
 
         if (isGroup) {
             groupMetadata = await sock.groupMetadata(from);
-            const participants = groupMetadata.participants;
-            const botId = sock.user.id.split(':') + '@s.whatsapp.net';
-            isAdmin = participants.some(p => p.id === sender && (p.admin === 'admin' || p.admin === 'superadmin'));
-            isBotAdmin = participants.some(p => p.id === botId && (p.admin === 'admin' || p.admin === 'superadmin'));
+            const participants = groupMetadata.participants || [];
+            const botNum = sock.user.id.split(':').shift().split('@').shift().replace(/\D/g, '');
+            const botLid = sock.user.lid ? sock.user.lid.split(':').shift().split('@').shift().replace(/\D/g, '') : '';
+
+            for (const p of participants) {
+                const pId = (p.id || '').split(':').shift().split('@').shift().replace(/\D/g, '');
+                const pPhone = (p.phoneNumber || '').split(':').shift().split('@').shift().replace(/\D/g, '');
+                const adminStatus = (p.admin === 'admin' || p.admin === 'superadmin');
+
+                if ((pId === senderNum || pPhone === senderNum) && adminStatus) isAdmin = true;
+                if ((pId === botNum || pPhone === botNum || (botLid && pId === botLid)) && adminStatus) isBotAdmin = true;
+            }
         }
 
         for (const [, plugin] of global.plugins) {
             if (plugin.commands && plugin.commands.includes(command)) {
-                if (plugin.owner && !isOwner) {
-                    return sock.sendMessage(from, { text: config.mess.onlyOwner }, { quoted: m });
-                }
-                if (plugin.group && !isGroup) {
-                    return sock.sendMessage(from, { text: config.mess.onlyGroup }, { quoted: m });
-                }
-                if (plugin.admin && !isAdmin && !isOwner) {
-                    return sock.sendMessage(from, { text: config.mess.onlyAdmin }, { quoted: m });
-                }
-                if (plugin.botAdmin && !isBotAdmin) {
-                    return sock.sendMessage(from, { text: config.mess.botAdmin }, { quoted: m });
-                }
+                if (plugin.owner && !isOwner) return sock.sendMessage(from, { text: config.mess.onlyOwner }, { quoted: m });
+                if (plugin.group && !isGroup) return sock.sendMessage(from, { text: config.mess.onlyGroup }, { quoted: m });
+                if (plugin.admin && !isAdmin && !isOwner) return sock.sendMessage(from, { text: config.mess.onlyAdmin }, { quoted: m });
+                if (plugin.botAdmin && !isBotAdmin) return sock.sendMessage(from, { text: config.mess.botAdmin }, { quoted: m });
 
-                await plugin.exec({ sock, m, from, sender, args, text, command, isOwner, isAdmin, isBotAdmin, groupMetadata });
+                await plugin.exec({ sock, m, from, sender: rawSender, args, text, command, isOwner, isAdmin, isBotAdmin, groupMetadata });
                 break;
             }
         }
