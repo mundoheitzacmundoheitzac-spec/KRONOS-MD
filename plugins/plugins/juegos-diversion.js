@@ -5,12 +5,13 @@ module.exports = {
         'gay', 'facha', 'inteligente', 'suerte', 'abrazo', 'beso', 'golpe'
     ],
     exec: async ({ sock, m, from, sender, args, text, command }) => {
-        const mentioned = m.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+        const mentionedJid = m.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+        const mentioned = mentionedJid[0];
         const target = mentioned || sender;
 
         if (command === 'ppt') {
             const opciones = ['piedra', 'papel', 'tijera'];
-            const userChoice = args?.toLowerCase();
+            const userChoice = (args[0] || '').toLowerCase();
             if (!opciones.includes(userChoice)) return sock.sendMessage(from, { text: '🎮 Usa: *.ppt piedra*, *.ppt papel* o *.ppt tijera*' }, { quoted: m });
             const botChoice = opciones[Math.floor(Math.random() * 3)];
             let res = '🤝 ¡Empate!';
@@ -32,11 +33,16 @@ module.exports = {
         }
 
         if (command === 'ship' || command === 'amor' || command === 'love') {
-            const p1 = mentioned || sender;
-            const p2 = mentioned || (mentioned ? sender : null);
-            if (!p2) return sock.sendMessage(from, { text: '💘 Etiqueta a una o dos personas. Ej: *.ship @usuario*' }, { quoted: m });
+            const p1 = mentionedJid[0] || sender;
+            const p2 = mentionedJid[1] || (mentionedJid[0] ? sender : null);
+            if (!p2) return sock.sendMessage(from, { text: '💘 Etiqueta a una o dos personas. Ej: *.ship @usuario* o *.ship @uno @dos*' }, { quoted: m });
             const pct = Math.floor(Math.random() * 101);
-            return sock.sendMessage(from, { text: `💖 *COMPATIBILIDAD*\n@${p1.split('@')} ❤️ @${p2.split('@')}\n\n📊 Resultado: *${pct}%*`, mentions: [p1, p2] }, { quoted: m });
+            let msg = `💖 *COMPATIBILIDAD*\n@${p1.split('@')[0]} ❤️ @${p2.split('@')[0]}\n\n📊 Resultado: *${pct}%*`;
+            if (pct > 80) msg += `\n\n💍 ¡Ya cásense!`;
+            else if (pct > 50) msg += `\n\n😍 Hay química...`;
+            else if (pct > 20) msg += `\n\n😐 Mejor como amigos.`;
+            else msg += `\n\n💔 Ni lo intentes.`;
+            return sock.sendMessage(from, { text: msg, mentions: [p1, p2] }, { quoted: m });
         }
 
         if (command === '8ball' || command === 'pregunta') {
@@ -67,13 +73,13 @@ module.exports = {
 
         if (['gay', 'facha', 'inteligente', 'suerte'].includes(command)) {
             const pct = Math.floor(Math.random() * 101);
-            return sock.sendMessage(from, { text: `📊 El nivel de *${command.toUpperCase()}* de @${target.split('@')} es del *${pct}%*`, mentions: [target] }, { quoted: m });
+            return sock.sendMessage(from, { text: `📊 El nivel de *${command.toUpperCase()}* de @${target.split('@')[0]} es del *${pct}%*`, mentions: [target] }, { quoted: m });
         }
 
         if (['abrazo', 'beso', 'golpe'].includes(command)) {
             if (!mentioned) return sock.sendMessage(from, { text: `⚠️ Etiqueta a alguien. Ej: *.${command} @usuario*` }, { quoted: m });
             const accion = command === 'abrazo' ? 'le dio un fuerte abrazo a' : command === 'beso' ? 'le plantó un beso a' : 'le soltó un zape a';
-            return sock.sendMessage(from, { text: `✨ @${sender.split('@')} ${accion} @${mentioned.split('@')}`, mentions: [sender, mentioned] }, { quoted: m });
+            return sock.sendMessage(from, { text: `✨ @${sender.split('@')[0]} ${accion} @${mentioned.split('@')[0]}`, mentions: [sender, mentioned] }, { quoted: m });
         }
     }
 };
