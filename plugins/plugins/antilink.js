@@ -80,17 +80,4 @@ module.exports = {
             const tieneLink = /https?:\/\/|www\.|chat\.whatsapp\.com|wa\.me|t\.me|youtube\.com|youtu\.be|tiktok\.com|instagram\.com|discord\.gg|facebook\.com/i.test(body);
             if (!tieneLink) return false;
 
-            // Sender real para mencionar bien, aunque venga como LID
-            const mentionJid = m.key.participant || m.participant || sender;
-            const num = String(mentionJid).split(':').shift().split('@').shift().replace(/\D/g, '');
-
-            try {
-                await sock.sendMessage(from, { delete: m.key });
-            } catch {}
-            await sock.sendMessage(from, { text: `🚫 @${num} Links no permitidos.`, mentions: [mentionJid] });
-            return true;
-        } catch {
-            return false;
-        }
-    }
-};
+            // Sender real para mencionar bien
